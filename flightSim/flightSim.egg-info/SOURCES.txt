@@ -1,0 +1,7 @@
+README.md
+setup.py
+flightSim.egg-info/PKG-INFO
+flightSim.egg-info/SOURCES.txt
+flightSim.egg-info/dependency_links.txt
+flightSim.egg-info/requires.txt
+flightSim.egg-info/top_level.txt
