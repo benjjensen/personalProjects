@@ -1,0 +1,7 @@
+README.md
+setup.py
+massSpring.egg-info/PKG-INFO
+massSpring.egg-info/SOURCES.txt
+massSpring.egg-info/dependency_links.txt
+massSpring.egg-info/requires.txt
+massSpring.egg-info/top_level.txt
