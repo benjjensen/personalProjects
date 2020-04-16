@@ -12,7 +12,6 @@ import flightSim
 from matplotlib import pyplot as plt
 from VideoWriter import videoWriter
 
-
 # env = gym.make('flightSim-v0')
 # env.reset()
 # env.render() 
@@ -141,11 +140,9 @@ class QNetwork(nn.Module):
     return self.net(x)
 
 def dqn_main():
-  save_count = 1
-
   # Hyper parameters
   lr = 1e-3
-  epochs = 1000
+  epochs = 1500
   start_training = 1000 # 1000
   gamma = 0.99
   batch_size = 32
@@ -155,7 +152,7 @@ def dqn_main():
   learn_frequency = 2
 
   # Init environment
-  state_size = 15
+  state_size = 5
   action_size = 3
   env = gym.make('flightSim-v0')
 
