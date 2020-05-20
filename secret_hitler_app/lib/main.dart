@@ -1,6 +1,23 @@
+/* TO DO:
+      Aesthetics:
+      - Flip boards to fill up, not down
+      - Use flexible containers everywhere
+      - Actually work on the aesthetics lol
+
+      Logistics:
+      - Disable card selection on redraw
+      - Allow multiple games to be played ('reset' option?)
+      - Animations:
+        - Drawing policies?
+
+      - Making this multiple device (game code?)
+
+      Other:
+      - General code clean up
+ */
+
 import 'package:flutter/material.dart';
 import 'dart:math';
-import 'package:sprintf/sprintf.dart';
 
 void main() {
   runApp(MyApp());
@@ -50,6 +67,10 @@ class MainPage extends StatelessWidget {
 }
 
 class Page_PlayerSetup extends StatefulWidget {
+  /*  Player Setup
+        Generates a form to gather the number of players and player names
+   */
+
   @override
   _Page_PlayerSetupState createState() => _Page_PlayerSetupState();
 }
@@ -61,10 +82,11 @@ class _Page_PlayerSetupState extends State<Page_PlayerSetup> {
 
   final _formKey = GlobalKey<FormState>();
 
+  List<String> names = [];
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      key: _formKey,
       appBar: AppBar(
         title: Text("Player Setup", style: TextStyle(fontSize: 24)),
       ),
@@ -77,7 +99,11 @@ class _Page_PlayerSetupState extends State<Page_PlayerSetup> {
                 "Player Names",
                 style: TextStyle(fontSize: 20),
               ),
-              GetForm_playerNames(),
+              Form(
+                key: _formKey, // Used for the validation step
+                child:
+                    GetForm_playerNames(), // Returns a TextFormField with the appropriate number of name fields
+              ),
               GetAddRemoveButtons(),
             ],
           ),
@@ -90,16 +116,17 @@ class _Page_PlayerSetupState extends State<Page_PlayerSetup> {
     var playerForm = List<Widget>();
     for (var player = 0; player < numPlayers; player++) {
       playerForm.add(TextFormField(
-          decoration: const InputDecoration(
-            hintText: 'Enter player name',
-          ),
-          validator: (value) {
-            print(value);
-            if (value.isEmpty) {
-              return 'Please input a name';
-            }
-            return value;
-          }));
+        decoration: const InputDecoration(
+          hintText: 'Enter player name',
+        ),
+        validator: (String value) {
+          if (value.isEmpty) {
+            return 'Please input a name';
+          }
+          names.add(value);
+          return null;
+        },
+      ));
     }
     return Column(children: playerForm);
   }
@@ -121,8 +148,8 @@ class _Page_PlayerSetupState extends State<Page_PlayerSetup> {
     }
     buttonList.add(BuildButton(context, "Begin", () {
       if (_formKey.currentState.validate()) {
-        Navigator.push(
-            context, MaterialPageRoute(builder: (context) => Board()));
+        Navigator.push(context,
+            MaterialPageRoute(builder: (context) => Board(names: names)));
         setState(() {});
       }
     }));
@@ -158,6 +185,42 @@ class _Page_PlayerSetupState extends State<Page_PlayerSetup> {
   }
 }
 
+class Page_GameOver extends StatelessWidget {
+  String winner;
+
+  Page_GameOver({this.winner});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(
+          "Game Over",
+          style: TextStyle(fontSize: 18),
+        ),
+      ),
+      body: Center(
+        child: Column(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: <Widget>[
+              Text(
+                "Game Over",
+                style: TextStyle(fontSize: 36),
+              ),
+              Text(
+                "Winner: $winner",
+                style: TextStyle(fontSize: 36),
+              ),
+              getButton(context, 'Return to Main Menu', () {
+                Navigator.push(context,
+                    MaterialPageRoute(builder: (context) => MainPage()));
+              })
+            ]),
+      ),
+    );
+  }
+}
+
 class Instructions extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -185,15 +248,22 @@ class Instructions extends StatelessWidget {
 }
 
 class Board extends StatefulWidget {
+  List<String> names;
+
+  Board({this.names});
+
   @override
   State<StatefulWidget> createState() {
-    return BoardState();
+    return BoardState(names: names);
   }
 }
 
 class BoardState extends State<Board> {
+  List<String> names;
+  static var numPlayers;
   final fascistColor = Colors.deepOrange;
   final liberalColor = Colors.indigo;
+
   static var policy = new Policies();
   static var revealedPolicies = ["Void", "Void", "Void"];
   static var policyColors = [Colors.grey, Colors.grey, Colors.grey];
@@ -203,19 +273,30 @@ class BoardState extends State<Board> {
   var fasPolInPlay = 0;
   var libPolInPlay = 0;
   static var invalidSelection;
-
   var buttonText = "Draw Policy";
+
+  static var settings = new Settings();
+
+  BoardState({this.names});
 
   @override
   Widget build(BuildContext context) {
+    if (!(settings.isSetup())) {
+      // Probably a better way to do this, but...
+      numPlayers = names.length;
+      settings.setSettings(numPlayers, names);
+      print("Settings Set!");
+    }
+
     return Scaffold(
         appBar: AppBar(
           title: Text(
-            "Secret Hitler",
+            "Secret Hitler: $numPlayers Players",
             style: TextStyle(fontSize: 24),
           ),
           centerTitle: true,
         ),
+        backgroundColor: Colors.blueGrey,
         body: Column(children: <Widget>[
           Spacer(flex: 1),
           Row(
@@ -399,8 +480,16 @@ class BoardState extends State<Board> {
       print("Error - invalid policy type");
     }
     if ((fasPolInPlay >= fasPolToWin) || (libPolInPlay >= libPolToWin)) {
-      fasPolInPlay = 0;
-      libPolInPlay = 0;
+      String winner;
+      if (fasPolInPlay > fasPolToWin) {
+        winner = 'Fascists!';
+      } else {
+        winner = 'Liberals!';
+      }
+      Navigator.push(
+          context,
+          MaterialPageRoute(
+              builder: (context) => Page_GameOver(winner: winner)));
     }
   }
 }
@@ -480,5 +569,119 @@ class Policies {
 
   List revealColors() {
     return colors;
+  }
+}
+
+class Settings {
+  static var numPlayers;
+  static List<String> playerNames;
+  static List<String> roles = [];
+
+  // static List<String> presidentialPowers;
+
+  static var numFas;
+  static var numLib;
+
+  static var setupFlag = true;
+
+  void setSettings(var number, List<String> names) {
+    setupFlag = false;
+    numPlayers = number;
+    playerNames = names;
+
+    switch (numPlayers) {
+      case 5:
+        {
+          numLib = 3;
+          numFas = 1;
+          break;
+        }
+      case 6:
+        {
+          numLib = 4;
+          numFas = 1;
+          break;
+        }
+      case 7:
+        {
+          numLib = 4;
+          numFas = 2;
+          break;
+        }
+      case 8:
+        {
+          numLib = 5;
+          numFas = 2;
+          break;
+        }
+      case 9:
+        {
+          numLib = 5;
+          numFas = 3;
+          break;
+        }
+      case 10:
+        {
+          numLib = 6;
+          numFas = 3;
+          break;
+        }
+      default:
+        {
+          print("Error! Invalid Number of Players: $numPlayers");
+          break;
+        }
+    }
+    assignRoles();
+  }
+
+  void assignRoles() {
+    Random random = new Random();
+    int randomNumber;
+    var fasCount = numFas;
+    var libCount = numLib;
+    var hitlerCount = 1;
+    var playerCount = numPlayers;
+
+    for (var i = 0; i < numPlayers; i++) {
+      randomNumber = random.nextInt(playerCount);
+      if (randomNumber < hitlerCount) {
+        hitlerCount--;
+        roles.add('Hitler');
+      } else if (randomNumber < (libCount + hitlerCount)) {
+        libCount--;
+        roles.add('Liberal');
+      } else {
+        fasCount--;
+        roles.add('Fascist');
+      }
+      playerCount--;
+    }
+
+    for (var i = 0; i < numPlayers; i++) {
+      String playerName = playerNames[i];
+      String role = roles[i];
+      print("$playerName: $role\n");
+    }
+  }
+
+  bool isSetup() {
+    return !setupFlag;
+  }
+
+  List<String> getNames() {
+    return playerNames;
+  }
+
+  int getNumPlayers() {
+    return numPlayers;
+  }
+
+  int getNumFas() {
+    return numFas;
+  }
+
+  int getNumLib() {
+    return numLib;
   }
 }
