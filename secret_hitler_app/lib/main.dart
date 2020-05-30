@@ -1,4 +1,6 @@
 /* TO DO:
+
+  PHASE ONE: Local Play
       Aesthetics:
       - Flip boards to fill up, not down
       - Use flexible containers everywhere
@@ -6,14 +8,17 @@
 
       Logistics:
       - Disable card selection on redraw
-      - Allow multiple games to be played ('reset' option?)
       - Animations:
         - Drawing policies?
+      - Presidential Actions
 
       - Making this multiple device (game code?)
 
       Other:
       - General code clean up
+
+  PHASE TWO: Online Play
+   # Firebase
  */
 
 import 'package:flutter/material.dart';
@@ -31,7 +36,7 @@ class MyApp extends StatelessWidget {
         // Title, Theme, Home:
         theme: ThemeData(
 //        primarySwatch: Colors.purple
-            primaryColor: Colors.purple),
+            primaryColor: Colors.deepOrange[800]),
         home: MainPage());
   }
 }
@@ -46,19 +51,51 @@ class MainPage extends StatelessWidget {
         title: Text("Secret Hitler"),
         centerTitle: true,
       ),
+      backgroundColor: Colors.grey[900],
       body: Center(
         child: Column(
           // mainAxisAlignment, children
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: <Widget>[
-            getButton(context, "Instructions", () {
-              Navigator.push(context,
-                  MaterialPageRoute(builder: (context) => Instructions()));
-            }),
-            getButton(context, "New Game", () {
-              Navigator.push(context,
-                  MaterialPageRoute(builder: (context) => Page_PlayerSetup()));
-            })
+            Expanded(
+              flex: 3,
+              child: Padding(
+                padding: const EdgeInsets.all(50.0),
+                child: Text(
+                  "SECRET HITLER",
+                  style: TextStyle(
+                    fontSize: 58,
+                    color: Colors.deepOrange[600],
+                  ),
+                ),
+              ),
+            ),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: getButton(context, "Instructions", () {
+                  Navigator.push(context,
+                      MaterialPageRoute(builder: (context) => Instructions()));
+                }),
+              ),
+            ),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: getButton(context, "Begin Local Game", () {
+                  Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => Page_PlayerSetup()));
+                }),
+              ),
+            ),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: getButton(context, "Begin Online Game", () {}),
+              ),
+            )
           ],
         ),
       ),
@@ -95,16 +132,29 @@ class _Page_PlayerSetupState extends State<Page_PlayerSetup> {
           padding: EdgeInsets.all(15.0),
           child: Column(
             children: <Widget>[
-              Text(
-                "Player Names",
-                style: TextStyle(fontSize: 20),
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Text(
+                  "Player Names",
+                  style: TextStyle(fontSize: 20),
+                ),
               ),
-              Form(
-                key: _formKey, // Used for the validation step
-                child:
-                    GetForm_playerNames(), // Returns a TextFormField with the appropriate number of name fields
+              Expanded(
+                flex: 4,
+                child: ListView(
+                  children: [
+                    Form(
+                      key: _formKey, // Used for the validation step
+                      child:
+                          GetForm_playerNames(), // Returns a TextFormField with the appropriate number of name fields
+                    ),
+                  ],
+                ),
               ),
-              GetAddRemoveButtons(),
+              Expanded(
+                flex: 2,
+                child: GetAddRemoveButtons(),
+              ),
             ],
           ),
         ),
@@ -135,24 +185,29 @@ class _Page_PlayerSetupState extends State<Page_PlayerSetup> {
     var buttonList = List<Widget>();
 
     if (numPlayers < maxPlayers) {
-      buttonList.add(BuildButton(context, "Add Player", () {
-        numPlayers++;
-        setState(() {});
-      }));
+      buttonList.add(Expanded(
+        child: BuildButton(context, "Add", () {
+          numPlayers++;
+          setState(() {});
+        }),
+      ));
     }
     if (numPlayers > minPlayers) {
-      buttonList.add(BuildButton(context, "Remove Player", () {
+      buttonList.add(Expanded(
+          child: BuildButton(context, "Remove", () {
         numPlayers--;
         setState(() {});
-      }));
+      })));
     }
-    buttonList.add(BuildButton(context, "Begin", () {
-      if (_formKey.currentState.validate()) {
-        Navigator.push(context,
-            MaterialPageRoute(builder: (context) => Board(names: names)));
-        setState(() {});
-      }
-    }));
+    buttonList.add(Expanded(
+      child: BuildButton(context, "Begin", () {
+        if (_formKey.currentState.validate()) {
+          Navigator.push(context,
+              MaterialPageRoute(builder: (context) => Board(names: names)));
+          setState(() {});
+        }
+      }),
+    ));
     return Center(
       child: Row(
         children: buttonList,
@@ -163,9 +218,9 @@ class _Page_PlayerSetupState extends State<Page_PlayerSetup> {
 
   Widget BuildButton(BuildContext context, String text, VoidCallback callback) {
     return Padding(
-      padding: EdgeInsets.all(10.0),
+      padding: EdgeInsets.all(8.0),
       child: ButtonTheme(
-        minWidth: 150,
+        minWidth: 10,
         height: 50,
         child: RaisedButton(
           textColor: Colors.black,
@@ -274,18 +329,31 @@ class BoardState extends State<Board> {
   var libPolInPlay = 0;
   static var invalidSelection;
   var buttonText = "Draw Policy";
+  static var drawable = true;
+  static var alertPresident = false;
 
   static var settings = new Settings();
 
   BoardState({this.names});
 
   @override
+  void initState() {
+    super.initState();
+  }
+
+  @override
   Widget build(BuildContext context) {
     if (!(settings.isSetup())) {
-      // Probably a better way to do this, but...
+      // Probably a better way to do this, but...  -> move to init state?
       numPlayers = names.length;
       settings.setSettings(numPlayers, names);
       print("Settings Set!");
+    }
+
+    if (alertPresident) {
+      print("President alerted!");
+      alertPresident = false;
+//      _alertPres2();
     }
 
     return Scaffold(
@@ -336,12 +404,15 @@ class BoardState extends State<Board> {
                   borderRadius: BorderRadius.all(Radius.circular(10)),
                 ),
                 onPressed: () {
-                  policy.drawPolicies();
-                  revealedPolicies = policy.revealPolicies();
-                  policyColors = policy.revealColors();
-                  selectRejectFlag = true;
-                  invalidSelection = 5;
-                  setState(() {});
+                  if (drawable) {
+                    policy.drawPolicies();
+                    revealedPolicies = policy.revealPolicies();
+                    policyColors = policy.revealColors();
+                    selectRejectFlag = true;
+                    invalidSelection = 5;
+                    drawable = false;
+                    setState(() {});
+                  }
                 },
               )),
           Spacer(flex: 1),
@@ -427,6 +498,7 @@ class BoardState extends State<Board> {
               revealedPolicies[number] = "X";
               selectRejectFlag = false;
               invalidSelection = number;
+              alertPresident = true;
               setState(() {});
             } else {
               addPolicyToBoard(policyColors[number], revealedPolicies[number]);
@@ -434,6 +506,7 @@ class BoardState extends State<Board> {
               policyColors = [Colors.grey, Colors.grey, Colors.grey];
               revealedPolicies = ["X", "X", "X"];
               invalidSelection = 5;
+              drawable = true;
               setState(() {});
             }
           }
@@ -492,6 +565,45 @@ class BoardState extends State<Board> {
               builder: (context) => Page_GameOver(winner: winner)));
     }
   }
+
+  Future<void> _alertPres() async {
+    return showDialog<void>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text("Alert President Title"),
+          content: Text("Alert President Content"),
+          actions: <Widget>[
+            FlatButton(
+              child: Text('Ok'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _alertPres2() async {
+    return showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        int selectedRadio = 0;
+
+        return AlertDialog(
+          content: StatefulBuilder(
+              builder: (BuildContext context, StateSetter setState) {
+            return Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [Text("HI")],
+            );
+          }),
+        );
+      },
+    );
+  }
 }
 
 Widget getButton(BuildContext context, String text, VoidCallback callback) {
@@ -500,12 +612,12 @@ Widget getButton(BuildContext context, String text, VoidCallback callback) {
     height: 80,
     child: RaisedButton(
       textColor: Colors.black,
-      color: Colors.greenAccent,
+      color: Colors.deepOrange[800],
       child: Text(text, style: TextStyle(fontSize: 24)),
       shape: RoundedRectangleBorder(
         side: BorderSide(
-          color: Colors.blue,
-          width: 5,
+          color: Colors.yellow[300],
+          width: 1,
         ),
         borderRadius: BorderRadius.all(Radius.circular(30)),
       ),
