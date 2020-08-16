@@ -52,7 +52,7 @@ class massSpringEnv(gym.Env):
         self.max_speed = np.infty           # TODO 
 
         self.minSpring_location = -100.0    # Left side of the spring
-        self.max_position = np.array([self.len_threshold, self.max_speed, 200.0, np.infty ], dtype = np.float32)
+        self.max_position = np.array([np.infty, self.max_speed, np.infty, np.infty ], dtype = np.float32)
 
         self.action_space = spaces.Discrete(3)
         self.observation_space = spaces.Box(-self.max_position, self.max_position)      # TODO
@@ -66,6 +66,7 @@ class massSpringEnv(gym.Env):
         self.steps_beyond_done = None   # Error detection - ensure we aren't calling step() after done
 
         self.commands = SignalGenerator(amplitude = 100.0, frequency = 0.07, y_offset = self.defaultPosition)
+
         self.timeStep = 0.01
         self.currentTime = 0.0
         self.refInput = self.commands.square(self.currentTime)[0]
@@ -78,6 +79,7 @@ class massSpringEnv(gym.Env):
         self.error = 0.0
         self.maxError = 100000.0
         self.totalReward = 0.0
+        self.randomizerFactor = 1
 
     def seed(self, seed=None):
         ''' Seeds random '''
@@ -97,7 +99,7 @@ class massSpringEnv(gym.Env):
         self.force += self.forceFactor * (action - 1.0) # -1 sets action to be (-1, 0, or 1)
         self.dynamics.propagateDynamics(self.force)
         self.state = self.dynamics.states()  # Only returns position, velocity
-        self.refInput = self.commands.square(self.currentTime)[0]
+        self.refInput = self.commands.square(self.currentTime)[0] * self.randomizerFactor
         self.state = np.append(self.state, self.refInput)
         self.state = np.append(self.state, self.force)
         self.currentTime += self.timeStep # TODO is there a better way to do this?
@@ -121,9 +123,9 @@ class massSpringEnv(gym.Env):
         reward = np.absolute(self.refInput - self.state[0]) * -0.1 # Reward proportional to error
 
         if np.absolute(self.refInput - self.state[0]) < 1:
-            reward = 300
-        elif np.absolute(self.refInput - self.state[0]) < 15:
-            reward = 50
+            reward = 500
+        elif np.absolute(self.refInput - self.state[0]) < 10:
+            reward = 30
 
         self.totalReward += reward
 
@@ -139,6 +141,13 @@ class massSpringEnv(gym.Env):
         self.dynamics.reset()
         self.refInput_prev = self.refInput
         self.state = np.array([self.np_random.uniform(low=-10., high=20.), self.defaultVelocity, self.refInput, self.np_random.uniform(low=-500., high = 500.)])
+
+        # tempRandomizer = np.random.randint(0,2)
+        # if tempRandomizer == 0:
+        #     self.randomizerFactor = -1
+        # else:
+        #     self.randomizerFactor = 1
+
         return self.state
 
     def render(self, mode='human'): # , close=False):

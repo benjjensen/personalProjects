@@ -68,59 +68,78 @@ class BoardState extends State<Board> {
           backgroundColor: SecretOrange, //Colors.deepOrange[800],
         ),
         backgroundColor: Background,
-        body: Column(children: <Widget>[
-          Spacer(flex: 1),
-          Row(
-              // GameBoard
-              mainAxisAlignment: MainAxisAlignment.center,
+        body: Stack(
+          children: <Widget>[
+            Column(
               children: <Widget>[
-                getPolicyBoard(fascistColor, Colors.orange, 3, 3, fasPolInPlay),
-                getPolicyBoard(
-                    liberalColor, Colors.lightBlue, 1, 4, libPolInPlay),
-              ]), // GameBoard
-          Spacer(flex: 1),
-          Row(
-              // Policy Cards
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: <Widget>[
-                getPolicyCard(revealedPolicies[0], policyColors[0], 0),
-                getPolicyCard(revealedPolicies[1], policyColors[1], 1),
-                getPolicyCard(revealedPolicies[2], policyColors[2], 2),
-              ]), // Policy Cards
-          Spacer(flex: 1),
-          ButtonTheme(
-              // Draw Policy
-              minWidth: 120.0,
-              height: 50.0,
-              child: RaisedButton(
-                textColor: Colors.black,
-                color: Colors.lightBlue,
-                child: Text(
-                  buttonText,
-                  style: TextStyle(fontSize: 18),
+                Spacer(flex: 1),
+                Row(
+                    // GameBoard
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: <Widget>[
+                      getPolicyBoard(
+                          fascistColor, Colors.orange, 3, 3, fasPolInPlay),
+                      getPolicyBoard(
+                          liberalColor, Colors.lightBlue, 1, 4, libPolInPlay),
+                    ]), // GameBoard
+//          Spacer(flex: 1),
+//          Row(
+//              // Policy Cards
+//              mainAxisAlignment: MainAxisAlignment.center,
+//              children: <Widget>[
+//                getPolicyCard(revealedPolicies[0], policyColors[0], 0),
+//                getPolicyCard(revealedPolicies[1], policyColors[1], 1),
+//                getPolicyCard(revealedPolicies[2], policyColors[2], 2),
+//              ]), // Policy Cards
+                Spacer(flex: 1),
+                Padding(
+                  padding: const EdgeInsets.all(10.0),
+                  child: ButtonTheme(
+                      // Draw Policy
+                      minWidth: 120.0,
+                      height: 50.0,
+                      child: RaisedButton(
+                        textColor: Colors.black,
+                        color: Colors.lightBlue,
+                        child: Text(
+                          buttonText,
+                          style: TextStyle(fontSize: 18),
+                        ),
+                        shape: RoundedRectangleBorder(
+                          side: BorderSide(
+                            color: Colors.blue,
+                            width: 3.0,
+                          ),
+                          borderRadius: BorderRadius.all(Radius.circular(10)),
+                        ),
+                        onPressed: () {
+                          if (drawable) {
+                            policy.drawPolicies();
+                            revealedPolicies = policy.revealPolicies();
+                            policyColors = policy.revealColors();
+                            selectRejectFlag = true;
+                            invalidSelection = 5;
+                            drawable = false;
+                            _visible = true;
+                            setState(() {});
+                          }
+                        },
+                      )),
                 ),
-                shape: RoundedRectangleBorder(
-                  side: BorderSide(
-                    color: Colors.blue,
-                    width: 3.0,
-                  ),
-                  borderRadius: BorderRadius.all(Radius.circular(10)),
-                ),
-                onPressed: () {
-                  if (drawable) {
-                    policy.drawPolicies();
-                    revealedPolicies = policy.revealPolicies();
-                    policyColors = policy.revealColors();
-                    selectRejectFlag = true;
-                    invalidSelection = 5;
-                    drawable = false;
-                    _visible = true;
-                    setState(() {});
-                  }
-                },
-              )),
-          Spacer(flex: 1),
-        ]));
+              ],
+            ),
+            Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: <Widget>[
+                  drawPolicyCard(revealedPolicies[0], policyColors[0], 0),
+                  drawPolicyCard(revealedPolicies[1], policyColors[1], 1),
+                  drawPolicyCard(revealedPolicies[2], policyColors[2], 2),
+                ], // Policy Cards
+              ),
+            ),
+          ],
+        ));
   }
 
   Widget getPolicyBoard(var primaryColor, var secondaryColor, var numPrimary,
@@ -146,8 +165,8 @@ class BoardState extends State<Board> {
       padding: EdgeInsets.all(2.0),
       child: Container(
           color: Colors.brown,
-          width: 130.0,
-          height: 350.0,
+          width: 150.0,
+          height: 400.0,
           child: Padding(
             padding: EdgeInsets.all(8.0),
             child: Container(
@@ -191,66 +210,77 @@ class BoardState extends State<Board> {
             RotatedBox(quarterTurns: 3, child: getPolicyCard(text, color, 2)));
   }
 
-  Widget getPolicyCard(String policyType, var policyColor, var number) {
-    var validSelections = true;
+  Widget drawPolicyCard(String policyType, var policyColor, var number) {
+//    var validSelections = true;
 
     return AnimatedOpacity(
       opacity: _visible ? 1.0 : 0.0,
-      duration: Duration(milliseconds: 500),
+      duration: Duration(milliseconds: 200),
       child: InkWell(
-          onTap: () {
-            if (number != invalidSelection) {
-              if (selectRejectFlag) {
-                policyColors[number] = Colors.grey;
-                revealedPolicies[number] = "X";
-                selectRejectFlag = false;
-                invalidSelection = number;
-                _showDialog();
-                setState(() {});
-              } else {
-                addPolicyToBoard(
-                    policyColors[number], revealedPolicies[number]);
-                selectRejectFlag = true;
-                policyColors = [Colors.grey, Colors.grey, Colors.grey];
-                revealedPolicies = ["X", "X", "X"];
-                invalidSelection = 5;
-                drawable = true;
-                _visible = false;
-                setState(() {});
-              }
+        onTap: () {
+          if (number != invalidSelection) {
+            if (selectRejectFlag) {
+              policyColors[number] = Colors.grey;
+              revealedPolicies[number] = "X";
+              selectRejectFlag = false;
+              invalidSelection = number;
+              _showDialog();
+              setState(() {});
+            } else {
+              addPolicyToBoard(policyColors[number], revealedPolicies[number]);
+              selectRejectFlag = true;
+              policyColors = [Colors.grey, Colors.grey, Colors.grey];
+              revealedPolicies = ["X", "X", "X"];
+              invalidSelection = 5;
+              drawable = true;
+              _visible = false;
+              setState(() {});
             }
-          },
-          child: Padding(
-              padding: EdgeInsets.all(4.0),
+          }
+        },
+        child: getPolicyCard(policyType, policyColor, number),
+      ),
+    );
+  }
+
+  Widget getPolicyCard(String policyType, var policyColor, var number) {
+    return Padding(
+      padding: EdgeInsets.all(4.0),
+      child: Container(
+        color: Colors.black,
+        width: 55.0, //230.0, //55
+        height: 80.0, //160.0, //80
+        child: Padding(
+          padding: EdgeInsets.all(0.5),
+          child: Container(
+            color: Colors.yellow[50],
+            child: Padding(
+              padding: EdgeInsets.all(5.0),
               child: Container(
-                  color: Colors.black,
-                  width: 55.0,
-                  height: 80.0,
-                  child: Padding(
-                      padding: EdgeInsets.all(0.5),
-                      child: Container(
-                          color: Colors.yellow[50],
-                          child: Padding(
-                              padding: EdgeInsets.all(5.0),
-                              child: Container(
-                                  color: policyColor,
-                                  child: Padding(
-                                      padding: EdgeInsets.all(5.0),
-                                      child: Container(
-                                        color: Colors.yellow[50],
-                                        child: Center(
-                                          child: RotatedBox(
-                                            quarterTurns: 0,
-                                            child: Text(
-                                              policyType,
-                                              style: TextStyle(
-                                                fontSize: 18,
-                                                color: policyColor,
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                      ))))))))),
+                color: policyColor,
+                child: Padding(
+                  padding: EdgeInsets.all(5.0),
+                  child: Container(
+                    color: Colors.yellow[50],
+                    child: Center(
+                      child: RotatedBox(
+                        quarterTurns: 0,
+                        child: Text(
+                          policyType,
+                          style: TextStyle(
+                            fontSize: 18, //64,
+                            color: policyColor,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 
@@ -283,8 +313,8 @@ class BoardState extends State<Board> {
       builder: (BuildContext context) {
         // return object of type Dialog
         return AlertDialog(
-          title: new Text("Alert Dialog title"),
-          content: new Text("Alert Dialog body"),
+          title: new Text("Pass to the chancellor!"),
+//          content: new Text("Alert Dialog body"),
           actions: <Widget>[
             // usually buttons at the bottom of the dialog
             new FlatButton(

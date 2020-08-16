@@ -149,13 +149,13 @@ def dqn_main():
   save_count = 1
 
   # Hyper parameters
-  lr = 1e-3
-  epochs = 1000
+  lr = 3e-5
+  epochs = 3000
   start_training = 1000
   gamma = 0.99
   batch_size = 32
   epsilon = 1
-  epsilon_decay = .99999
+  epsilon_decay = .999999
   target_update = 1000
   learn_frequency = 2
 
@@ -176,7 +176,7 @@ def dqn_main():
   # Init replay buffer
   memory = []
 
-  saveVideo = False
+  saveVideo = True
   sim_time = 0.0
 
   # Begin main loop
@@ -185,11 +185,13 @@ def dqn_main():
   loop = tqdm(total=epochs, position=0, leave=False)
   for epoch in range(epochs):
     last_epoch = (epoch+1 == epochs)
-    if epoch % 200 == 199:
-      video = videoWriter(video_name="massSpring.avi",
-                      bounding_box=(100, 100, 1000, 1000),
+    if epoch % 100 == 99:
+      video = videoWriter(video_name= "massSpringNew{}.avi".format(epoch),
+                      bounding_box=(200, 200, 900, 900),
                       output_rate=0.1)
       saveVideo = True
+    else:
+      saveVideo = False
     # Reset environment
     state = env.reset()
     done = False

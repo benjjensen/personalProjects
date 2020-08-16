@@ -142,7 +142,7 @@ class QNetwork(nn.Module):
 def dqn_main():
   # Hyper parameters
   lr = 1e-3
-  epochs = 1500
+  epochs = 1000
   start_training = 1000 # 1000
   gamma = 0.99
   batch_size = 32

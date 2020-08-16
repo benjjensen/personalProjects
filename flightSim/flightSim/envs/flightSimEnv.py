@@ -91,7 +91,7 @@ class flightSimEnv(gym.Env):
         self.commands = msg_autopilot()
         self.Va_command = signals(dc_offset=25.0, amplitude=3.0, start_time=10.0, frequency = 0.001) # TODO 
         self.h_command = signals(dc_offset=100.0, amplitude=10.0, start_time=0.0, frequency = 0.05)
-        self.chi_command = signals(dc_offset=np.radians(180), amplitude=np.radians(1), start_time=10.0, frequency = 0.001)
+        self.chi_command = signals(dc_offset=np.radians(180), amplitude=np.radians(1), start_time=10.0, frequency = 0.1)
 
         self.renderFlag = False
         self.elevator_command = -0.2
@@ -116,8 +116,8 @@ class flightSimEnv(gym.Env):
 
         tempState = self.dynamics.msg_true_state
         self.commands.airspeed_command = 25.0 # TODO ? 
-        self.commands.course_command = 0.0 # TODO ? 
-        self.commands.altitude_command = self.h_command.square(self.currentTime)
+        self.commands.course_command = self.chi_command.square(self.currentTime) # 0.0 # TODO ? 
+        self.commands.altitude_command = 100 # self.h_command.square(self.currentTime)
         delta, commanded_state = self.ctrl.update(self.commands, tempState) #TODO update to take in only one?
         old_elevator = delta[1]
 

@@ -1,13 +1,17 @@
-class Page_PlayerSetup extends StatefulWidget {
+import 'package:flutter/material.dart';
+import 'Board.dart';
+import '../Styles.dart';
+
+class PlayerSetup extends StatefulWidget {
   /*  Player Setup
         Generates a form to gather the number of players and player names
    */
 
   @override
-  _Page_PlayerSetupState createState() => _Page_PlayerSetupState();
+  _PlayerSetupState createState() => _PlayerSetupState();
 }
 
-class _Page_PlayerSetupState extends State<Page_PlayerSetup> {
+class _PlayerSetupState extends State<PlayerSetup> {
   var minPlayers = 5;
   var maxPlayers = 10;
   var numPlayers = 5;
@@ -20,9 +24,10 @@ class _Page_PlayerSetupState extends State<Page_PlayerSetup> {
   Widget build(BuildContext context) {
     names = []; // Resets the name list each time
     return Scaffold(
-      backgroundColor: Colors.blueGrey[800],
+      backgroundColor: Background,
       appBar: AppBar(
         title: Text("Player Setup", style: TextStyle(fontSize: 24)),
+        backgroundColor: SecretOrange, //Colors.deepOrange[800],
       ),
       body: Center(
         child: Padding(
@@ -132,12 +137,15 @@ class _Page_PlayerSetupState extends State<Page_PlayerSetup> {
         minWidth: 10,
         height: 50,
         child: RaisedButton(
-          textColor: Colors.yellow[300],
-          color: Colors.deepOrange[800],
-          child: Text(text, style: TextStyle(fontSize: 18)),
+          textColor: SecretPaleYellow, //Colors.yellow[300],
+          color: SecretOrange, //Colors.deepOrange[800],
+          child: Text(
+            text,
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
           shape: RoundedRectangleBorder(
             side: BorderSide(
-              color: Colors.yellow[300],
+              color: SecretPaleYellow, //Colors.yellow[300],
               width: 1,
             ),
             borderRadius: BorderRadius.all(Radius.circular(30)),
